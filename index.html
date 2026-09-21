@@ -1,0 +1,2527 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>S.O.S Maroc & Guide Touristique | Urgences, Géolocalisation & Carte</title>
+  <meta name="description" content="Plateforme d'urgence autonome pour le Maroc. Bouton SOS 1 clic (177, 19, 15), géolocalisation GPS en direct avec partage WhatsApp/SMS et carte interactive Leaflet.">
+
+  <!-- Google Fonts: Outfit & Cairo -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+  <style>
+    /* ================================================================
+       THÈME : POLICE & TRADITION MAROCAINE
+       Palette : Vert Royal | Or | Marine | Rouge sceau
+    ================================================================ */
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+    :root {
+      /* Couleurs officialité marocaine */
+      --primary: #c1272d;           /* Rouge drapeau / alarme */
+      --primary-dark: #8b0e12;
+      --primary-glow: rgba(193, 39, 45, 0.5);
+      --secondary: #00582e;         /* Vert Gendarmerie Royale */
+      --secondary-light: #007a40;
+      --secondary-glow: rgba(0, 88, 46, 0.4);
+      --gold: #b8941a;              /* Or traditionnel */
+      --gold-light: #d4af37;        /* Or brillant */
+      --gold-pale: #f0d060;         /* Or clair */
+      --navy: #0c1a2e;              /* Bleu marine officiel */
+      --navy-mid: #142338;
+      --navy-card: #1a2f47;
+
+      /* Fonds et textes */
+      --dark-bg: #080f1c;
+      --card-bg: rgba(20, 35, 56, 0.92);
+      --card-border: rgba(180, 148, 26, 0.22);
+      --glass-panel: rgba(8, 15, 28, 0.92);
+      --glass-blur: blur(16px);
+      --text-main: #e8dfc8;         /* Parchemin chaud */
+      --text-bright: #f5ede0;
+      --text-muted: #7a8fa8;
+      --danger: #e82a30;
+      --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6);
+
+      /* Rayons et typo */
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --radius-lg: 18px;
+      --font-main: 'Cairo', 'Outfit', sans-serif;
+      --font-ar:   'Cairo', sans-serif;
+
+      /* Zellige / bordure géométrique */
+      --zellige-color: rgba(180, 148, 26, 0.08);
+      --zellige-line:  rgba(180, 148, 26, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Fond zellige géométrique marocain */
+    body {
+      font-family: var(--font-main);
+      background-color: var(--dark-bg);
+      background-image:
+        linear-gradient(45deg, var(--zellige-line) 1px, transparent 1px),
+        linear-gradient(-45deg, var(--zellige-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--zellige-color) 1px, transparent 1px),
+        linear-gradient(0deg, var(--zellige-color) 1px, transparent 1px);
+      background-size: 28px 28px, 28px 28px, 14px 14px, 14px 14px;
+      color: var(--text-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ============================================================
+       BARRE DE NAVIGATION — Aspect poste de commandement
+    ============================================================ */
+    header.top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.6rem 1.5rem;
+      background: linear-gradient(90deg, #070e1b 0%, #0c1a2e 40%, #071210 100%);
+      border-bottom: 2px solid var(--gold);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.6), 0 2px 0 rgba(180,148,26,0.3);
+    }
+
+    /* Motif de bordure arabesque au-dessus du header */
+    header.top-bar::before {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 0; right: 0;
+      height: 4px;
+      background: repeating-linear-gradient(
+        90deg,
+        var(--gold-light) 0px, var(--gold-light) 6px,
+        transparent 6px, transparent 10px,
+        var(--secondary) 10px, var(--secondary) 16px,
+        transparent 16px, transparent 20px
+      );
+      opacity: 0.6;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      text-decoration: none;
+    }
+
+    /* Emblème badge police hexagonal */
+    .flag-icon {
+      width: 46px;
+      height: 46px;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      background: linear-gradient(145deg, var(--secondary-light) 0%, var(--secondary) 60%, #003d20 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gold-light);
+      font-size: 1.35rem;
+      box-shadow: 0 0 18px rgba(0,88,46,0.5), 0 0 0 2px var(--gold);
+      flex-shrink: 0;
+    }
+
+    .brand-title {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-title h1 {
+      font-size: 1.1rem;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--gold-light);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-shadow: 0 0 12px rgba(212,175,55,0.4);
+    }
+
+    .brand-title span.subtitle {
+      font-size: 0.7rem;
+      color: var(--secondary-light);
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+
+    .btn-header-sos {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      background: linear-gradient(135deg, #8b0e12, var(--primary));
+      color: var(--gold-pale);
+      border: 1px solid rgba(212,175,55,0.5);
+      padding: 0.45rem 0.9rem;
+      border-radius: 4px;
+      font-weight: 800;
+      font-size: 0.82rem;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      box-shadow: 0 0 14px var(--primary-glow), inset 0 1px 0 rgba(255,255,255,0.1);
+      transition: all 0.25s ease;
+      animation: pulse-border 2s infinite;
+    }
+
+    .btn-header-sos:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 22px rgba(193,39,45,0.75), inset 0 1px 0 rgba(255,255,255,0.15);
+    }
+
+    /* ============================================================
+       LAYOUT PRINCIPAL
+    ============================================================ */
+    main.app-layout {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 430px 1fr;
+      height: calc(100vh - 65px);
+      position: relative;
+    }
+
+    @media (max-width: 992px) {
+      main.app-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+        display: flex;
+        flex-direction: column;
+      }
+    }
+
+    /* Sidebar — parchemin sombre avec bordure or */
+    aside.sidebar {
+      background: linear-gradient(180deg, #0c1a2e 0%, #0a1520 100%);
+      border-right: 2px solid var(--gold);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      z-index: 500;
+    }
+
+    /* Séparateur arabesque entre sections */
+    .sidebar-section {
+      padding: 1.1rem 1.2rem;
+      border-bottom: 1px solid rgba(180, 148, 26, 0.2);
+      position: relative;
+    }
+    .sidebar-section::before {
+      content: '✦';
+      position: absolute;
+      bottom: -9px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.7rem;
+      color: var(--gold);
+      background: #0c1a2e;
+      padding: 0 6px;
+      z-index: 1;
+    }
+
+    /* Carte GPS — style tableau de bord officiel */
+    .gps-card {
+      background: linear-gradient(145deg, var(--navy-card) 0%, var(--navy-mid) 100%);
+      border: 1px solid var(--gold);
+      border-radius: var(--radius-sm);
+      padding: 1rem;
+      position: relative;
+      box-shadow: 0 0 0 1px rgba(180,148,26,0.1), 0 8px 24px rgba(0,0,0,0.5);
+    }
+    .gps-card::after {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      border: 1px solid rgba(180,148,26,0.12);
+      border-radius: 4px;
+      pointer-events: none;
+    }
+
+    .gps-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .gps-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.68rem;
+      padding: 0.18rem 0.55rem;
+      border-radius: 3px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-family: var(--font-main);
+    }
+
+    .gps-badge.active {
+      background: rgba(0, 90, 40, 0.35);
+      color: #5af0a0;
+      border: 1px solid rgba(90, 240, 160, 0.4);
+    }
+
+    .gps-badge.waiting {
+      background: rgba(180, 148, 26, 0.2);
+      color: var(--gold-light);
+      border: 1px solid rgba(180, 148, 26, 0.4);
+    }
+
+    .gps-coords-display {
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: var(--radius-sm);
+      padding: 0.65rem;
+      margin-bottom: 0.75rem;
+      border: 1px solid rgba(180, 148, 26, 0.25);
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .coord-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+    }
+
+    .coord-label { color: var(--text-muted); }
+
+    .coord-val {
+      font-family: 'Courier New', monospace;
+      font-weight: 700;
+      color: var(--gold-light);
+      letter-spacing: 0.04em;
+    }
+
+    .gps-status-text {
+      font-size: 0.77rem;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+      line-height: 1.35;
+    }
+
+    /* Boutons de partage — style insigne police */
+    .share-buttons-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+
+    .btn-share {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.55rem 0.7rem;
+      border-radius: 4px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      font-family: var(--font-main);
+    }
+
+    .btn-whatsapp {
+      background: #128c53;
+      color: #fff;
+      border-color: rgba(18,140,83,0.5);
+    }
+    .btn-whatsapp:hover { background: #0a6e3e; transform: translateY(-1px); }
+
+    .btn-sms {
+      background: #1e3a5f;
+      color: var(--gold-pale);
+      border-color: rgba(180,148,26,0.4);
+    }
+    .btn-sms:hover { background: #254878; transform: translateY(-1px); }
+
+    .btn-copy {
+      grid-column: span 2;
+      background: rgba(180,148,26,0.1);
+      color: var(--gold-light);
+      border: 1px solid rgba(180,148,26,0.35);
+    }
+    .btn-copy:hover { background: rgba(180,148,26,0.2); }
+
+    /* Section numéros d'urgence — style tableau officiel */
+    .quick-call-section h3 {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--gold);
+      margin-bottom: 0.7rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-main);
+      border-bottom: 1px solid rgba(180,148,26,0.2);
+      padding-bottom: 0.4rem;
+    }
+
+    .urgent-numbers-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.55rem;
+    }
+
+    /* Cartes numéros — style rapport officiel */
+    .urgent-num-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.65rem 0.85rem;
+      border-radius: 4px;
+      background: rgba(12, 26, 46, 0.8);
+      border: 1px solid rgba(180, 148, 26, 0.18);
+      border-left: 4px solid var(--gold);
+      text-decoration: none;
+      color: var(--text-bright);
+      transition: all 0.2s ease;
+      font-family: var(--font-main);
+    }
+
+    .urgent-num-card:hover {
+      background: rgba(20, 42, 70, 0.9);
+      border-color: var(--gold);
+      transform: translateX(3px);
+    }
+
+    .urgent-num-card.gendarmerie { border-left-color: var(--secondary-light); }
+    .urgent-num-card.police      { border-left-color: #1a56db; }
+    .urgent-num-card.pompiers    { border-left-color: var(--primary); }
+    .urgent-num-card.offline-112 {
+      border-left-color: var(--gold-light);
+      background: linear-gradient(90deg, rgba(180,148,26,0.12), rgba(12,26,46,0.8));
+    }
+    .urgent-num-card.offline-112:hover {
+      background: linear-gradient(90deg, rgba(180,148,26,0.22), rgba(20,42,70,0.9));
+    }
+
+    .urgent-info { display: flex; flex-direction: column; }
+    .urgent-name { font-weight: 700; font-size: 0.88rem; }
+    .urgent-sub  { font-size: 0.68rem; color: var(--text-muted); margin-top: 1px; }
+
+    .urgent-dial {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: rgba(0,0,0,0.35);
+      padding: 0.35rem 0.75rem;
+      border-radius: 3px;
+      font-weight: 900;
+      font-size: 1.05rem;
+      color: var(--gold-light);
+      border: 1px solid rgba(180,148,26,0.3);
+      font-family: 'Courier New', monospace;
+    }
+
+    /* Filtre destinations — boutons style Zellige */
+    .places-list-container { flex: 1; padding: 1rem 1.1rem; }
+
+    .places-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.7rem;
+    }
+
+    .places-filter-tabs {
+      display: flex;
+      gap: 0.35rem;
+      overflow-x: auto;
+      padding-bottom: 0.45rem;
+      margin-bottom: 0.7rem;
+    }
+
+    .filter-tab {
+      background: rgba(12,26,46,0.8);
+      border: 1px solid rgba(180,148,26,0.25);
+      color: var(--text-muted);
+      padding: 0.3rem 0.7rem;
+      border-radius: 3px;
+      font-size: 0.72rem;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: var(--font-main);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .filter-tab.active, .filter-tab:hover {
+      background: linear-gradient(135deg, var(--secondary) 0%, #004d25 100%);
+      color: var(--gold-light);
+      border-color: var(--gold);
+    }
+
+    /* Éléments de liste lieux — style fiche terrain */
+    .places-scroll {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      max-height: 240px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .place-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.55rem 0.8rem;
+      background: rgba(12, 26, 46, 0.7);
+      border: 1px solid rgba(180, 148, 26, 0.15);
+      border-left: 3px solid var(--gold);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.18s;
+      font-family: var(--font-main);
+    }
+
+    .place-item:hover {
+      background: rgba(20, 45, 75, 0.9);
+      border-left-color: var(--secondary-light);
+      border-color: rgba(180, 148, 26, 0.3);
+    }
+
+    .place-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 4px;
+      background: rgba(0, 88, 46, 0.2);
+      border: 1px solid rgba(0, 122, 64, 0.35);
+      color: var(--gold-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+
+    .place-details { flex: 1; }
+    .place-title   { font-size: 0.85rem; font-weight: 700; color: var(--text-bright); }
+    .place-region  { font-size: 0.68rem; color: var(--text-muted); }
+    .place-action-btn { color: var(--gold); font-size: 0.78rem; }
+
+    /* Section carte — fond sombre officiel */
+    .map-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 480px;
+      background: #0a121f;
+    }
+
+    #morocco-map { width: 100%; height: 100%; z-index: 1; }
+
+    /* Contrôles carte — style militaire */
+    .map-controls-floating {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      z-index: 500;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .btn-map-control {
+      background: linear-gradient(135deg, #0c1a2e 0%, #142338 100%);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--gold);
+      color: var(--gold-light);
+      padding: 0.55rem 0.85rem;
+      border-radius: 4px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+      transition: all 0.22s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-family: var(--font-main);
+    }
+
+    .btn-map-control:hover {
+      background: linear-gradient(135deg, #142338 0%, #1c3050 100%);
+      border-color: var(--gold-light);
+      transform: translateY(-1px);
+      color: var(--gold-pale);
+    }
+
+    .btn-map-control.active {
+      background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-light) 100%);
+      border-color: var(--gold);
+      color: var(--gold-light);
+    }
+
+    /* Bouton SOS flottant — style sceau royal pulsant */
+    .floating-sos-btn {
+      position: fixed;
+      bottom: 1.75rem;
+      right: 1.75rem;
+      z-index: 999;
+      width: 74px;
+      height: 74px;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      background: linear-gradient(145deg, #a00d14, var(--primary), #7a0910);
+      border: none;
+      color: var(--gold-pale);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 8px 28px rgba(193,39,45,0.7), 0 0 0 0 rgba(193,39,45,0.5);
+      animation: pulse-ring 2s infinite cubic-bezier(0.66, 0, 0, 1);
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      filter: drop-shadow(0 0 8px rgba(180,148,26,0.5));
+    }
+
+    .floating-sos-btn:hover { transform: scale(1.1); }
+    .floating-sos-btn i    { font-size: 1.5rem; margin-bottom: 2px; }
+    .floating-sos-btn span { font-size: 0.68rem; font-weight: 900; letter-spacing: 0.08em; }
+
+    /* Modal urgence — style salle opérationnelle */
+    .sos-modal-backdrop {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(4, 10, 20, 0.88);
+      backdrop-filter: blur(12px);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .sos-modal-backdrop.open { opacity: 1; pointer-events: auto; }
+
+    .sos-modal-dialog {
+      background: linear-gradient(170deg, #0a1520 0%, #0c1d30 100%);
+      border: 1px solid var(--gold);
+      border-radius: var(--radius-md);
+      width: 100%;
+      max-width: 520px;
+      overflow: hidden;
+      box-shadow: 0 0 0 3px rgba(180,148,26,0.1), 0 25px 60px rgba(0,0,0,0.8), 0 0 40px var(--primary-glow);
+      transform: scale(0.93);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .sos-modal-backdrop.open .sos-modal-dialog { transform: scale(1); }
+
+    /* En-tête modal — style code rouge */
+    .modal-header-emergency {
+      background: linear-gradient(135deg, #5a0009, #8b0e12, #3d0005);
+      padding: 1.1rem 1.35rem;
+      position: relative;
+      color: var(--gold-pale);
+      border-bottom: 2px solid var(--gold);
+    }
+    /* Motif arabesque dans le header modal */
+    .modal-header-emergency::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(
+        45deg,
+        rgba(180,148,26,0.06) 0px, rgba(180,148,26,0.06) 1px,
+        transparent 1px, transparent 12px
+      );
+      pointer-events: none;
+    }
+
+    .modal-header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+    }
+    .modal-header-top h2 {
+      font-size: 1.2rem;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-family: var(--font-main);
+    }
+
+    .close-modal-btn {
+      background: rgba(180,148,26,0.15);
+      border: 1px solid rgba(180,148,26,0.4);
+      color: var(--gold-light);
+      width: 32px; height: 32px;
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.1rem;
+      transition: background 0.2s;
+    }
+    .close-modal-btn:hover { background: rgba(180,148,26,0.3); }
+
+    .modal-header-sub {
+      font-size: 0.78rem;
+      color: rgba(240, 215, 160, 0.8);
+      margin-top: 0.35rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .modal-body {
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    /* Boutons appels modal — dossiers d'intervention */
+    .call-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(10, 22, 38, 0.85);
+      border: 1px solid rgba(180, 148, 26, 0.2);
+      padding: 0.9rem 1.1rem;
+      border-radius: 4px;
+      text-decoration: none;
+      color: var(--text-bright);
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+      font-family: var(--font-main);
+    }
+    .call-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 5px;
+    }
+    .call-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        90deg,
+        rgba(180,148,26,0.03) 0px, rgba(180,148,26,0.03) 1px,
+        transparent 1px, transparent 20px
+      );
+      pointer-events: none;
+    }
+
+    .call-card.gendarmerie::before { background: var(--secondary-light); }
+    .call-card.police::before      { background: #1a6be0; }
+    .call-card.protection::before  { background: var(--primary); }
+    .call-card.offline::before     { background: var(--gold); }
+
+    .call-card:hover { transform: translateX(4px); border-color: var(--gold); }
+    .call-card.gendarmerie:hover { background: rgba(0,90,46,0.15); border-color: var(--secondary-light); }
+    .call-card.police:hover      { background: rgba(26,107,224,0.12); border-color: #1a6be0; }
+    .call-card.protection:hover  { background: rgba(193,39,45,0.12); border-color: var(--primary); }
+    .call-card.offline:hover     { background: rgba(180,148,26,0.12); border-color: var(--gold); }
+
+    .call-card-text { display: flex; flex-direction: column; }
+    .call-card-title {
+      font-size: 1rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .call-card-desc { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.18rem; }
+
+    .call-card-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.55rem 1rem;
+      border-radius: 3px;
+      font-weight: 900;
+      font-size: 1.15rem;
+      color: var(--gold-light);
+      font-family: 'Courier New', monospace;
+      letter-spacing: 0.04em;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    }
+    .call-card.gendarmerie .call-card-badge { background: #014d20; border: 1px solid var(--secondary-light); }
+    .call-card.police .call-card-badge      { background: #0f2d6e; border: 1px solid #1a6be0; }
+    .call-card.protection .call-card-badge  { background: #5a0009; border: 1px solid var(--primary); }
+    .call-card.offline .call-card-badge     { background: #3d2c00; border: 1px solid var(--gold); }
+
+    /* Offline Banner Notice */
+    .offline-notice-box {
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: var(--radius-sm);
+      padding: 0.75rem 0.9rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.65rem;
+      font-size: 0.78rem;
+      color: #fbbf24;
+      line-height: 1.4;
+    }
+
+    /* Bannière hors réseau — style rapport de terrain */
+    .offline-notice-box {
+      background: rgba(180, 148, 26, 0.1);
+      border: 1px solid rgba(180, 148, 26, 0.4);
+      border-left: 4px solid var(--gold-light);
+      border-radius: 4px;
+      padding: 0.7rem 0.85rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      font-size: 0.78rem;
+      color: var(--gold-pale);
+      line-height: 1.4;
+    }
+
+    /* Box GPS dans le modal */
+    .modal-gps-box {
+      background: rgba(8, 20, 38, 0.8);
+      border: 1px solid rgba(180, 148, 26, 0.3);
+      border-radius: 4px;
+      padding: 0.9rem;
+    }
+
+    .modal-gps-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--gold-light);
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      margin-bottom: 0.45rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .modal-gps-coords {
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      color: var(--gold-light);
+      margin-bottom: 0.7rem;
+      word-break: break-all;
+    }
+
+    /* Ligne autres numéros */
+    .other-numbers-row {
+      display: flex;
+      gap: 0.5rem;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      justify-content: space-around;
+      border-top: 1px solid rgba(180,148,26,0.2);
+      padding-top: 0.75rem;
+    }
+    .other-num-link { color: var(--gold-light); text-decoration: none; font-weight: 700; }
+
+    /* Popups Leaflet — style rapport */
+    .leaflet-popup-content-wrapper {
+      background: #0c1a2e;
+      color: var(--text-main);
+      border: 1px solid var(--gold);
+      border-radius: 6px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.6);
+    }
+    .leaflet-popup-tip { background: #0c1a2e; }
+
+    .popup-content-box { padding: 4px; font-family: var(--font-main); }
+    .popup-title {
+      font-size: 0.95rem; font-weight: 800;
+      color: var(--gold-light);
+      display: flex; align-items: center; gap: 0.4rem;
+      margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .popup-tag {
+      display: inline-block; font-size: 0.65rem;
+      background: rgba(0,88,46,0.25); color: #5af0a0;
+      padding: 2px 6px; border-radius: 3px;
+      margin-bottom: 0.45rem; font-weight: 700;
+    }
+    .popup-desc { font-size: 0.77rem; color: var(--text-muted); line-height: 1.35; margin-bottom: 0.7rem; }
+    .popup-actions { display: flex; gap: 0.45rem; }
+    .popup-btn {
+      flex: 1; padding: 0.38rem 0.5rem; font-size: 0.72rem;
+      border-radius: 3px; text-align: center; text-decoration: none;
+      font-weight: 700; display: inline-flex; align-items: center;
+      justify-content: center; gap: 0.3rem; font-family: var(--font-main);
+      text-transform: uppercase; letter-spacing: 0.03em;
+    }
+    .popup-btn-itinerary { background: #0f2d6e; color: var(--gold-light); border: 1px solid #1a6be0; }
+    .popup-btn-center    { background: rgba(180,148,26,0.1); color: var(--gold-light); border: 1px solid rgba(180,148,26,0.3); }
+
+    /* Marker pin styling */
+    .custom-map-pin {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+      border: 2px solid #fff;
+      color: #fff;
+      font-size: 12px;
+      transition: transform 0.2s;
+    }
+
+    .pin-city { background: #3b82f6; }
+    .pin-nature { background: #10b981; }
+    .pin-desert { background: #f59e0b; }
+    .pin-beach { background: #06b6d4; }
+    .pin-user {
+      background: #ef4444;
+      animation: pulse-user 1.5s infinite;
+    }
+
+    /* Keyframes */
+    @keyframes pulse-ring {
+      0% {
+        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.8), 0 10px 25px rgba(0, 0, 0, 0.5);
+      }
+      70% {
+        box-shadow: 0 0 0 18px rgba(220, 38, 38, 0), 0 10px 25px rgba(0, 0, 0, 0.5);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0), 0 10px 25px rgba(0, 0, 0, 0.5);
+      }
+    }
+
+    @keyframes pulse-border {
+      0% { box-shadow: 0 0 0 0 rgba(193, 39, 45, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(193, 39, 45, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(193, 39, 45, 0); }
+    }
+
+    @keyframes pulse-user {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8); }
+      70% { box-shadow: 0 0 0 14px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+
+    /* Mobile Tabs Switcher */
+    .mobile-tabs-bar {
+      display: none;
+      background: #11151c;
+      border-bottom: 1px solid var(--card-border);
+      padding: 0.4rem 0.75rem;
+      gap: 0.5rem;
+      position: sticky;
+      top: 57px;
+      z-index: 900;
+    }
+
+    .mobile-tab-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      padding: 0.55rem 0.5rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .mobile-tab-btn.active {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff;
+      border-color: var(--primary);
+      box-shadow: 0 4px 12px var(--primary-glow);
+    }
+
+    /* Mobile Responsive Optimizations (< 768px) */
+    @media (max-width: 768px) {
+      .mobile-tabs-bar {
+        display: flex;
+      }
+
+      header.top-bar {
+        padding: 0.6rem 0.9rem;
+      }
+
+      .brand-title h1 {
+        font-size: 1rem;
+      }
+
+      .brand-title span.subtitle {
+        display: none;
+      }
+
+      .flag-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 1.15rem;
+      }
+
+      .btn-header-sos {
+        padding: 0.45rem 0.75rem;
+        font-size: 0.78rem;
+      }
+
+      main.app-layout {
+        position: relative;
+        height: calc(100vh - 105px);
+        overflow: hidden;
+      }
+
+      /* Sidebar & Map Phone State */
+      aside.sidebar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow-y: auto;
+        display: none;
+        z-index: 10;
+        background: #0d1117;
+      }
+
+      aside.sidebar.mobile-visible {
+        display: flex;
+      }
+
+      .map-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 5;
+      }
+
+      .map-container.mobile-hidden {
+        display: none;
+      }
+
+      .floating-sos-btn {
+        bottom: 1.25rem;
+        right: 1.25rem;
+        width: 65px;
+        height: 65px;
+      }
+
+      .floating-sos-btn i {
+        font-size: 1.4rem;
+      }
+
+      .floating-sos-btn span {
+        font-size: 0.68rem;
+      }
+
+      .sos-modal-dialog {
+        max-width: 95vw;
+        border-radius: var(--radius-md);
+      }
+
+      .modal-body {
+        padding: 1rem;
+        gap: 0.9rem;
+      }
+
+      .call-card {
+        padding: 0.85rem 1rem;
+      }
+
+      .call-card-title {
+        font-size: 0.95rem;
+      }
+
+      .call-card-badge {
+        padding: 0.45rem 0.85rem;
+        font-size: 1.05rem;
+      }
+    }
+
+    /* Fonctionnalités exclusives — thème zellige/police */
+    .torch-panel {
+      background: rgba(60, 44, 0, 0.35);
+      border: 1px solid rgba(180,148,26,0.35);
+      border-radius: 4px;
+      padding: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.9rem;
+    }
+    .torch-btn {
+      width: 50px; height: 50px;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      border: none;
+      background: rgba(180,148,26,0.15);
+      color: var(--gold-light);
+      font-size: 1.3rem;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .torch-btn.on {
+      background: var(--gold-light);
+      color: #000;
+      box-shadow: 0 0 24px rgba(212,175,55,0.9);
+      animation: torch-pulse 0.8s infinite;
+    }
+    @keyframes torch-pulse {
+      0%,100% { box-shadow: 0 0 18px rgba(212,175,55,0.8); }
+      50%       { box-shadow: 0 0 48px rgba(212,175,55,1); }
+    }
+    .torch-info { flex: 1; }
+    .torch-title { font-size: 0.82rem; font-weight: 700; color: var(--gold-light); text-transform: uppercase; letter-spacing: 0.05em; }
+    .torch-sub   { font-size: 0.68rem; color: var(--text-muted); margin-top: 2px; }
+    .sos-blink-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background: #fff;
+      pointer-events: none;
+    }
+
+    /* Chrono */
+    .chrono-panel {
+      background: rgba(50, 6, 8, 0.35);
+      border: 1px solid rgba(193,39,45,0.35);
+      border-radius: 4px;
+      padding: 0.8rem 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+    }
+    .chrono-display {
+      font-family: 'Courier New', monospace;
+      font-size: 1.55rem;
+      font-weight: 900;
+      color: #ff6b6b;
+      letter-spacing: 0.06em;
+    }
+    .chrono-label { font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .chrono-controls { display: flex; gap: 0.45rem; margin-left: auto; }
+    .btn-chrono {
+      padding: 0.32rem 0.65rem;
+      border-radius: 3px;
+      border: none;
+      font-size: 0.72rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-family: var(--font-main);
+    }
+    .btn-chrono-start { background: var(--primary); color: var(--gold-pale); }
+    .btn-chrono-stop  { background: rgba(180,148,26,0.12); color: var(--gold); border: 1px solid rgba(180,148,26,0.3); }
+    .btn-chrono-start:hover { background: var(--primary-dark); }
+
+    /* Météo */
+    .weather-panel {
+      background: linear-gradient(135deg, rgba(7,56,71,0.4), rgba(4,30,50,0.4));
+      border: 1px solid rgba(14,165,233,0.3);
+      border-radius: 4px;
+      padding: 0.8rem 0.9rem;
+    }
+    .weather-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.55rem; }
+    .weather-title  { font-size: 0.78rem; font-weight: 700; color: #7dd3fc; display: flex; align-items: center; gap: 0.4rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .weather-refresh { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.82rem; transition: transform 0.4s; }
+    .weather-refresh:hover { transform: rotate(180deg); color: #7dd3fc; }
+    .weather-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem; }
+    .weather-item { background: rgba(0,0,0,0.3); border-radius: 3px; padding: 0.45rem 0.65rem; border: 1px solid rgba(14,165,233,0.15); }
+    .weather-val  { font-size: 1rem; font-weight: 800; color: #e0f2fe; font-family: 'Courier New', monospace; }
+    .weather-key  { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .weather-status { font-size: 0.72rem; color: var(--text-muted); text-align: center; padding-top: 0.45rem; }
+
+    /* Messages multilingues */
+    .lang-panel {
+      background: rgba(30,15,60,0.35);
+      border: 1px solid rgba(139,92,246,0.3);
+      border-radius: 4px;
+      padding: 0.8rem 0.9rem;
+    }
+    .lang-title { font-size: 0.78rem; font-weight: 700; color: #a78bfa; display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.55rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .lang-tabs  { display: flex; gap: 0.3rem; margin-bottom: 0.55rem; flex-wrap: wrap; }
+    .lang-tab {
+      padding: 0.22rem 0.55rem;
+      border-radius: 3px;
+      border: 1px solid rgba(139,92,246,0.3);
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: var(--font-main);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .lang-tab.active, .lang-tab:hover { background: #5b21b6; color: var(--gold-pale); border-color: #7c3aed; }
+    .lang-message-box {
+      background: rgba(0,0,0,0.35);
+      border: 1px solid rgba(139,92,246,0.2);
+      border-radius: 3px;
+      padding: 0.55rem 0.72rem;
+      font-size: 0.76rem;
+      color: #e2e8f0;
+      line-height: 1.4;
+      margin-bottom: 0.45rem;
+      min-height: 52px;
+      font-family: var(--font-main);
+    }
+    .btn-copy-msg {
+      width: 100%; padding: 0.38rem;
+      border-radius: 3px;
+      border: 1px solid rgba(139,92,246,0.35);
+      background: rgba(139,92,246,0.1);
+      color: #a78bfa;
+      font-size: 0.72rem; font-weight: 700;
+      cursor: pointer; transition: all 0.2s;
+      text-transform: uppercase; letter-spacing: 0.04em;
+      font-family: var(--font-main);
+    }
+    .btn-copy-msg:hover { background: rgba(139,92,246,0.25); }
+
+    /* Indicateur réseau */
+    .network-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.4rem 0.75rem;
+      border-radius: 3px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      border: 1px solid;
+      transition: all 0.4s;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-family: var(--font-main);
+    }
+    .network-online  { background: rgba(0,88,46,0.18); color: #5af0a0; border-color: rgba(0,122,64,0.4); }
+    .network-offline { background: rgba(193,39,45,0.18); color: #ff8080; border-color: rgba(193,39,45,0.4); animation: pulse-border 1.5s infinite; }
+    .network-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+    /* Scrollbar or sur fond sombre */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #080f1c; }
+    ::-webkit-scrollbar-thumb { background: rgba(180,148,26,0.3); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(180,148,26,0.5); }
+
+    /* --- AUTHENTICATION SYSTEM --- */
+    #auth-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-dark);
+      z-index: 100000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      background-image: var(--bg-pattern);
+    }
+    .auth-card {
+      background: rgba(8, 15, 28, 0.95);
+      border: 2px solid var(--primary);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 0 40px rgba(0,0,0,0.8), inset 0 0 15px rgba(212,175,55,0.1);
+    }
+    .auth-logo { margin-bottom: 1.5rem; }
+    .auth-logo i { font-size: 3rem; color: var(--gold); text-shadow: 0 0 10px rgba(212,175,55,0.5); }
+    .auth-title { font-size: 1.5rem; font-weight: 800; color: #fff; margin-bottom: 0.5rem; text-transform: uppercase; }
+    .auth-subtitle { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 2rem; }
+    
+    .auth-form-group {
+      margin-bottom: 1.2rem;
+      text-align: left;
+    }
+    .auth-label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--gold-pale);
+      margin-bottom: 0.4rem;
+      text-transform: uppercase;
+    }
+    .auth-input {
+      width: 100%;
+      padding: 0.8rem;
+      background: rgba(0,0,0,0.5);
+      border: 1px solid rgba(180,148,26,0.3);
+      border-radius: 4px;
+      color: #fff;
+      font-size: 0.95rem;
+      font-family: var(--font-main);
+      transition: all 0.3s;
+    }
+    .auth-input:focus {
+      outline: none;
+      border-color: var(--gold);
+      box-shadow: 0 0 10px rgba(212,175,55,0.2);
+    }
+    .btn-auth {
+      width: 100%;
+      padding: 0.9rem;
+      background: linear-gradient(135deg, #0f5132, #14532d);
+      border: 1px solid var(--primary-light);
+      border-radius: 4px;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      transition: all 0.3s;
+      margin-top: 1rem;
+    }
+    .btn-auth:hover { background: linear-gradient(135deg, #14532d, #166534); box-shadow: 0 0 15px rgba(22,101,52,0.6); }
+    
+    .btn-scan {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 0.8rem;
+      background: rgba(180,148,26,0.15);
+      border: 1px dashed var(--gold);
+      border-radius: 4px;
+      color: var(--gold);
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 0.5rem;
+      position: relative;
+    }
+    .btn-scan:hover { background: rgba(180,148,26,0.25); }
+    .btn-scan input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+    
+    .auth-switch {
+      margin-top: 1.5rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .auth-switch a {
+      color: var(--gold-light);
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .auth-switch a:hover { text-decoration: underline; }
+    
+    .scan-status {
+      display: none;
+      font-size: 0.8rem;
+      margin-top: 0.5rem;
+      text-align: center;
+    }
+    .scan-status.loading { display: block; color: #60a5fa; }
+    .scan-status.success { display: block; color: #10b981; }
+
+    #app-wrapper { display: none; }
+  </style>
+</head>
+<body>
+
+  <div id="auth-overlay">
+    <!-- Login Form -->
+    <div class="auth-card" id="login-view">
+      <div class="auth-logo"><i class="fa-solid fa-shield-halved"></i></div>
+      <div class="auth-title">Portail S.O.S</div>
+      <div class="auth-subtitle">Identification requise pour prévenir les abus.</div>
+      <form id="login-form" onsubmit="handleLogin(event)">
+        <div class="auth-form-group">
+          <label class="auth-label">Numéro de CIN</label>
+          <input type="text" class="auth-input" id="login-cin" placeholder="Ex: AB123456" required>
+        </div>
+        <div class="auth-form-group">
+          <label class="auth-label">Mot de passe</label>
+          <input type="password" class="auth-input" id="login-pwd" required>
+        </div>
+        <button type="submit" class="btn-auth">Se Connecter</button>
+      </form>
+      <div class="auth-switch">
+        Pas de compte ? <a onclick="toggleAuthView('register')">S'inscrire (Scanner CIN)</a>
+      </div>
+    </div>
+
+    <!-- Register Form -->
+    <div class="auth-card" id="register-view" style="display: none;">
+      <div class="auth-logo"><i class="fa-solid fa-id-card"></i></div>
+      <div class="auth-title">Inscription S.O.S</div>
+      <div class="auth-subtitle">Veuillez scanner votre Carte Nationale.</div>
+      <form id="register-form" onsubmit="handleRegister(event)">
+        <div class="auth-form-group">
+          <label class="auth-label">Nom Complet</label>
+          <input type="text" class="auth-input" id="reg-name" placeholder="Votre nom" required>
+        </div>
+        <div class="auth-form-group">
+          <label class="auth-label">Numéro de CIN</label>
+          <input type="text" class="auth-input" id="reg-cin" placeholder="Ex: AB123456" required>
+        </div>
+        <div class="auth-form-group">
+          <label class="auth-label">Mot de passe</label>
+          <input type="password" class="auth-input" id="reg-pwd" required>
+        </div>
+        
+        <div class="auth-form-group">
+          <label class="auth-label">Validation d'Identité</label>
+          <div class="btn-scan">
+            <i class="fa-solid fa-camera"></i> Scanner la carte (Caméra)
+            <input type="file" accept="image/*" capture="environment" id="cin-upload" onchange="simulateScan(this)" required>
+          </div>
+          <div id="scan-status" class="scan-status">En attente du scan...</div>
+        </div>
+
+        <button type="submit" class="btn-auth" id="btn-register" disabled style="opacity: 0.5;">S'inscrire</button>
+      </form>
+      <div class="auth-switch">
+        Déjà inscrit ? <a onclick="toggleAuthView('login')">Se Connecter</a>
+      </div>
+    </div>
+  </div>
+
+  <div id="app-wrapper">
+
+  <!-- Top Navigation -->
+  <header class="top-bar">
+    <div class="brand-group">
+      <div class="flag-icon" title="Royaume du Maroc">
+        <i class="fa-solid fa-star"></i>
+      </div>
+      <div class="brand-title">
+        <h1>S.O.S MAROC <span style="color: var(--primary);">| طوارئ</span></h1>
+        <span class="subtitle">Sécurité, Assistance & Découverte du Royaume</span>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <a href="tel:112" class="btn-header-sos" style="background: linear-gradient(135deg, #d97706, #b45309); text-decoration: none; animation: none;" title="Appel d'urgence GSM universel sans réseau / sans SIM">
+        <i class="fa-solid fa-tower-broadcast"></i>
+        <span>112 (SANS RÉSEAU)</span>
+      </a>
+      <button class="btn-header-sos" onclick="openSosModal()" id="header-sos-btn">
+        <i class="fa-solid fa-phone-volume"></i>
+        <span>URGENCE (S.O.S)</span>
+      </button>
+      <!-- Indicateur réseau en temps réel -->
+      <div id="network-status-badge" class="network-indicator network-online">
+        <div class="network-dot"></div>
+        <span id="network-text">En ligne</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Tab Switcher (Vue Smartphone) -->
+  <div class="mobile-tabs-bar" id="mobile-tabs-bar">
+    <button class="mobile-tab-btn active" id="tab-btn-map" onclick="switchMobileView('map')">
+      <i class="fa-solid fa-map-location-dot"></i>
+      <span>Carte du Maroc</span>
+    </button>
+    <button class="mobile-tab-btn" id="tab-btn-emergency" onclick="switchMobileView('emergency')">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <span>Urgences & GPS</span>
+    </button>
+  </div>
+
+  <!-- Main Application Body -->
+  <main class="app-layout">
+    <!-- Left Panel -->
+    <aside class="sidebar" id="app-sidebar">
+      
+      <!-- Geolocation & Sharing Section -->
+      <section class="sidebar-section">
+        <div class="gps-card">
+          <div class="gps-card-header">
+            <h2 style="font-size: 0.95rem; font-weight: 700; display:flex; align-items:center; gap:0.5rem;">
+              <i class="fa-solid fa-location-crosshairs" style="color: #60a5fa;"></i>
+              Ma Position GPS
+            </h2>
+            <span id="gps-status-badge" class="gps-badge waiting">Recherche...</span>
+          </div>
+
+          <div class="gps-coords-display">
+            <div class="coord-row">
+              <span class="coord-label">Latitude :</span>
+              <span class="coord-val" id="lat-display">--.------</span>
+            </div>
+            <div class="coord-row">
+              <span class="coord-label">Longitude :</span>
+              <span class="coord-val" id="lng-display">--.------</span>
+            </div>
+            <div class="coord-row">
+              <span class="coord-label">Précision :</span>
+              <span class="coord-val" id="acc-display">-- mètres</span>
+            </div>
+          </div>
+
+          <p class="gps-status-text" id="gps-description">
+            Cliquez pour partager immédiatement vos coordonnées précises avec les secours ou vos proches.
+          </p>
+
+          <div class="share-buttons-grid">
+            <a href="#" id="share-whatsapp-btn" class="btn-share btn-whatsapp" target="_blank">
+              <i class="fa-brands fa-whatsapp"></i> WhatsApp
+            </a>
+            <a href="#" id="share-sms-btn" class="btn-share btn-sms">
+              <i class="fa-solid fa-comment-sms"></i> SMS
+            </a>
+            <button id="copy-coords-btn" class="btn-share btn-copy" onclick="copyCoordinates()">
+              <i class="fa-solid fa-copy"></i> Copier les coordonnées
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Urgent Phone Numbers Quick Bar -->
+      <section class="sidebar-section quick-call-section">
+        <h3>
+          <span>Numéros d'urgence vérifiés</span>
+          <i class="fa-solid fa-shield-halved" style="color: var(--secondary);"></i>
+        </h3>
+
+        <div class="urgent-numbers-grid">
+          <!-- Urgence Sans Réseau / Sans SIM 112 -->
+          <a href="tel:112" class="urgent-num-card offline-112" title="Numéro d'urgence GSM universel sans réseau / sans carte SIM">
+            <div class="urgent-info">
+              <span class="urgent-name" style="color: #fbbf24;"><i class="fa-solid fa-tower-broadcast"></i> Urgence Sans Réseau</span>
+              <span class="urgent-sub">GSM universel, capte n'importe quelle antenne (sans SIM)</span>
+            </div>
+            <div class="urgent-dial" style="background: rgba(245, 158, 11, 0.25); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4);">
+              <i class="fa-solid fa-phone"></i>
+              <span>112</span>
+            </div>
+          </a>
+
+          <!-- Gendarmerie Royale 177 -->
+          <a href="tel:177" class="urgent-num-card gendarmerie" title="Appeler la Gendarmerie Royale">
+            <div class="urgent-info">
+              <span class="urgent-name">Gendarmerie Royale</span>
+              <span class="urgent-sub">Zones rurales, pistes & hors agglo.</span>
+            </div>
+            <div class="urgent-dial">
+              <i class="fa-solid fa-phone"></i>
+              <span>177</span>
+            </div>
+          </a>
+
+          <!-- Police Secours 19 -->
+          <a href="tel:19" class="urgent-num-card police" title="Appeler la Police Secours">
+            <div class="urgent-info">
+              <span class="urgent-name">Police Secours</span>
+              <span class="urgent-sub">Villes & agglomérations urbaines</span>
+            </div>
+            <div class="urgent-dial">
+              <i class="fa-solid fa-phone"></i>
+              <span>19</span>
+            </div>
+          </a>
+
+          <!-- Protection Civile / Pompiers / SAMU 15 -->
+          <a href="tel:15" class="urgent-num-card pompiers" title="Appeler la Protection Civile">
+            <div class="urgent-info">
+              <span class="urgent-name">Protection Civile</span>
+              <span class="urgent-sub">Ambulance, pompiers & secours</span>
+            </div>
+            <div class="urgent-dial">
+              <i class="fa-solid fa-phone"></i>
+              <span>15</span>
+            </div>
+          </a>
+        </div>
+      </section>
+
+      <!-- === FONCTIONNALITÉS EXCLUSIVES === -->
+
+      <!-- 1. Lampe Torche SOS -->
+      <section class="sidebar-section">
+        <div class="torch-panel">
+          <button class="torch-btn" id="torch-btn" onclick="toggleTorch()" title="Activer la lampe torche SOS">
+            <i class="fa-solid fa-flashlight"></i>
+          </button>
+          <div class="torch-info">
+            <div class="torch-title"><i class="fa-solid fa-lightbulb"></i> Lampe Torche S.O.S</div>
+            <div class="torch-sub">Clignote SOS en Morse (... --- ...) pour signaler votre position</div>
+          </div>
+        </div>
+        <div class="sos-blink-overlay" id="sos-blink"></div>
+      </section>
+
+      <!-- 2. Chronomètre d'urgence -->
+      <section class="sidebar-section">
+        <div class="chrono-panel">
+          <div>
+            <div class="chrono-label">Chronomètre d'urgence</div>
+            <div class="chrono-display" id="chrono-display">00:00:00</div>
+          </div>
+          <div class="chrono-controls">
+            <button class="btn-chrono btn-chrono-start" id="chrono-start-btn" onclick="toggleChrono()"><i class="fa-solid fa-play"></i> Démarrer</button>
+            <button class="btn-chrono btn-chrono-stop" onclick="resetChrono()"><i class="fa-solid fa-rotate-left"></i></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Météo en direct (Open-Meteo, sans clé API) -->
+      <section class="sidebar-section">
+        <div class="weather-panel">
+          <div class="weather-header">
+            <div class="weather-title"><i class="fa-solid fa-cloud-sun"></i> Météo locale en direct</div>
+            <button class="weather-refresh" onclick="loadWeather()" title="Rafraîchir"><i class="fa-solid fa-rotate"></i></button>
+          </div>
+          <div id="weather-content">
+            <div class="weather-status">Activez la localisation pour afficher la météo...</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. Messages d'urgence multilingues -->
+      <section class="sidebar-section">
+        <div class="lang-panel">
+          <div class="lang-title"><i class="fa-solid fa-language"></i> Message d'urgence — Copier & Envoyer</div>
+          <div class="lang-tabs">
+            <button class="lang-tab active" onclick="setLang('fr')">🇫🇷 Français</button>
+            <button class="lang-tab" onclick="setLang('ar')">🇲🇦 عربي</button>
+            <button class="lang-tab" onclick="setLang('en')">🇬🇧 English</button>
+            <button class="lang-tab" onclick="setLang('es')">🇪🇸 Español</button>
+          </div>
+          <div class="lang-message-box" id="lang-msg-box">Activez la localisation pour générer le message...</div>
+          <button class="btn-copy-msg" onclick="copyEmergencyMsg()"><i class="fa-solid fa-copy"></i> Copier ce message</button>
+        </div>
+      </section>
+
+      <!-- Tourist Regions & Major Cities -->
+      <div class="places-list-container">
+        <div class="places-header">
+          <h3 style="font-size: 0.9rem; font-weight: 700; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted);">
+            Destinations & Régions
+          </h3>
+          <span style="font-size: 0.75rem; color: #94a3b8;" id="places-count">12 lieux</span>
+        </div>
+
+        <div class="places-filter-tabs">
+          <button class="filter-tab active" onclick="filterPlaces('all')">Tous</button>
+          <button class="filter-tab" onclick="filterPlaces('nature')">Nature & Montagne</button>
+          <button class="filter-tab" onclick="filterPlaces('city')">Grandes Villes</button>
+          <button class="filter-tab" onclick="filterPlaces('desert')">Désert</button>
+          <button class="filter-tab" onclick="filterPlaces('beach')">Côtes</button>
+        </div>
+
+        <div class="places-scroll" id="places-list">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- Map Canvas Section -->
+    <div class="map-container" id="app-map-container">
+      <div id="morocco-map"></div>
+
+      <!-- Floating Controls on Map -->
+      <div class="map-controls-floating">
+        <button class="btn-map-control" id="locate-me-btn" onclick="requestUserLocation(true)">
+          <i class="fa-solid fa-crosshairs"></i>
+          <span>Me localiser</span>
+        </button>
+        <button class="btn-map-control" onclick="resetMapMorocco()">
+          <i class="fa-solid fa-map"></i>
+          <span>Vue Maroc</span>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Big Floating S.O.S Button -->
+  <button class="floating-sos-btn" onclick="openSosModal()" aria-label="Bouton d'urgence SOS">
+    <i class="fa-solid fa-phone-volume"></i>
+    <span>S.O.S</span>
+  </button>
+
+  <!-- Emergency Modal Window -->
+  <div class="sos-modal-backdrop" id="sos-modal" onclick="onBackdropClick(event)">
+    <div class="sos-modal-dialog">
+      <div class="modal-header-emergency">
+        <div class="modal-header-top">
+          <h2><i class="fa-solid fa-triangle-exclamation"></i> URGENCE MAROC / طوارئ</h2>
+          <button class="close-modal-btn" onclick="closeSosModal()">&times;</button>
+        </div>
+        <p class="modal-header-sub">
+          Ligne directe avec les services de sécurité et de secours du Royaume du Maroc.
+        </p>
+      </div>
+
+      <div class="modal-body">
+        <!-- Bannière explicative Hors Réseau / Sans SIM -->
+        <div class="offline-notice-box">
+          <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.15rem; margin-top: 2px;"></i>
+          <div>
+            <strong>Aucun réseau de votre opérateur ?</strong>
+            Le <strong>112</strong> est le numéro d'urgence GSM universel au Maroc : votre téléphone utilise automatiquement <em>n'importe quelle antenne relais disponible</em> (Maroc Telecom, Orange, inwi), même sans carte SIM ou écran verrouillé.
+          </div>
+        </div>
+
+        <!-- Appel d'urgence sans réseau 112 -->
+        <a href="tel:112" class="call-card offline">
+          <div class="call-card-text">
+            <span class="call-card-title">
+              <i class="fa-solid fa-tower-broadcast" style="color: #fbbf24;"></i> Urgence Sans Réseau / Tout Opérateur
+            </span>
+            <span class="call-card-desc">Numéro GSM prioritaire universel (Maroc & International), fonctionne sans SIM</span>
+          </div>
+          <div class="call-card-badge">
+            <i class="fa-solid fa-phone"></i> 112
+          </div>
+        </a>
+
+        <!-- Direct Phone calls -->
+        <a href="tel:177" class="call-card gendarmerie">
+          <div class="call-card-text">
+            <span class="call-card-title">
+              <i class="fa-solid fa-shield"></i> Gendarmerie Royale
+            </span>
+            <span class="call-card-desc">Routes, campagnes, montagnes et hors agglomération</span>
+          </div>
+          <div class="call-card-badge">
+            <i class="fa-solid fa-phone"></i> 177
+          </div>
+        </a>
+
+        <a href="tel:19" class="call-card police">
+          <div class="call-card-text">
+            <span class="call-card-title">
+              <i class="fa-solid fa-building-shield"></i> Police Secours
+            </span>
+            <span class="call-card-desc">En milieu urbain (Casablanca, Rabat, Marrakech...)</span>
+          </div>
+          <div class="call-card-badge">
+            <i class="fa-solid fa-phone"></i> 19
+          </div>
+        </a>
+
+        <a href="tel:15" class="call-card protection">
+          <div class="call-card-text">
+            <span class="call-card-title">
+              <i class="fa-solid fa-truck-medical"></i> Protection Civile
+            </span>
+            <span class="call-card-desc">Incendies, secours médical, ambulances, SAMU</span>
+          </div>
+          <div class="call-card-badge">
+            <i class="fa-solid fa-phone"></i> 15
+          </div>
+        </a>
+
+        <!-- GPS Coordinates Box in Modal -->
+        <div class="modal-gps-box">
+          <div class="modal-gps-title">
+            <i class="fa-solid fa-satellite-dish" style="color: #60a5fa;"></i>
+            Coordonnées à communiquer au régulateur :
+          </div>
+          <div class="modal-gps-coords" id="modal-coords-text">
+            Détection de votre position GPS en cours...
+          </div>
+          <div class="share-buttons-grid">
+            <a href="#" id="modal-whatsapp-btn" class="btn-share btn-whatsapp" target="_blank">
+              <i class="fa-brands fa-whatsapp"></i> Envoyer ma position
+            </a>
+            <a href="#" id="modal-sms-btn" class="btn-share btn-sms">
+              <i class="fa-solid fa-comment-sms"></i> SMS d'urgence
+            </a>
+          </div>
+        </div>
+
+        <div class="other-numbers-row">
+          <span>Autoroutes (ADM) : <a href="tel:5050" class="other-num-link">5050</a></span>
+          <span>Antipoison : <a href="tel:0537686464" class="other-num-link">0537 68 64 64</a></span>
+          <span>ONCF (Train) : <a href="tel:2255" class="other-num-link">2255</a></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <script>
+    // --- Destinations et Pôles Touristiques Clés du Maroc ---
+    const MOROCCO_PLACES = [
+      {
+        id: 'azilal',
+        name: 'Azilal & Cascades d\'Ouzoud',
+        category: 'nature',
+        lat: 31.9616,
+        lng: -6.5742,
+        desc: 'Porte du Haut-Atlas central, cascades mythiques d\'Ouzoud, géoparc M\'Goun et lac Bin El Ouidane.',
+        icon: 'fa-mountain-sun',
+        region: 'Béni Mellal-Khénifra'
+      },
+      {
+        id: 'marrakech',
+        name: 'Marrakech',
+        category: 'city',
+        lat: 31.6295,
+        lng: -7.9811,
+        desc: 'La Ville Rouge, place Jemaa el-Fna, palais historiques et jardins Majorelle.',
+        icon: 'fa-mosque',
+        region: 'Marrakech-Safi'
+      },
+      {
+        id: 'rabat',
+        name: 'Rabat (Capitale)',
+        category: 'city',
+        lat: 34.0209,
+        lng: -6.8416,
+        desc: 'Capitale administrative, Tour Hassan, Kasbah des Oudayas et ville lumière.',
+        icon: 'fa-landmark',
+        region: 'Rabat-Salé-Kénitra'
+      },
+      {
+        id: 'casablanca',
+        name: 'Casablanca',
+        category: 'city',
+        lat: 33.5731,
+        lng: -7.5898,
+        desc: 'Métropole économique, Mosquée Hassan II majestueuse et front de mer d\'Ain Diab.',
+        icon: 'fa-city',
+        region: 'Casablanca-Settat'
+      },
+      {
+        id: 'fes',
+        name: 'Fès',
+        category: 'city',
+        lat: 34.0331,
+        lng: -5.0003,
+        desc: 'Capitale spirituelle, médina millénaire Fès el-Bali et tanneries Chouara.',
+        icon: 'fa-scroll',
+        region: 'Fès-Meknès'
+      },
+      {
+        id: 'tanger',
+        name: 'Tanger & Détroit',
+        category: 'beach',
+        lat: 35.7595,
+        lng: -5.8340,
+        desc: 'Porte de l\'Afrique, rencontre entre Atlantique et Méditerranée, Cap Spartel.',
+        icon: 'fa-compass',
+        region: 'Tanger-Tétouan-Al Hoceïma'
+      },
+      {
+        id: 'chefchaouen',
+        name: 'Chefchaouen',
+        category: 'nature',
+        lat: 35.1716,
+        lng: -5.2697,
+        desc: 'La perle bleue du Rif, ruelles pittoresques et ambiance sereine montagnarde.',
+        icon: 'fa-gem',
+        region: 'Tanger-Tétouan-Al Hoceïma'
+      },
+      {
+        id: 'agadir',
+        name: 'Agadir & Taghazout',
+        category: 'beach',
+        lat: 30.4278,
+        lng: -9.5981,
+        desc: 'Baie ensoleillée toute l\'année, plages dorées et spot mondial de surf de Taghazout.',
+        icon: 'fa-umbrella-beach',
+        region: 'Souss-Massa'
+      },
+      {
+        id: 'ouarzazate',
+        name: 'Ouarzazate & Ksar Aït Benhaddou',
+        category: 'desert',
+        lat: 30.9335,
+        lng: -6.9370,
+        desc: 'Porte du désert et studios de cinéma hollywoodiens, forteresses en pisé classées UNESCO.',
+        icon: 'fa-film',
+        region: 'Drâa-Tafilalet'
+      },
+      {
+        id: 'merzouga',
+        name: 'Merzouga & Erg Chebbi',
+        category: 'desert',
+        lat: 31.0993,
+        lng: -4.0116,
+        desc: 'Grandes dunes de sable doré du Sahara, bivouacs nomades et levers de soleil inoubliables.',
+        icon: 'fa-sun',
+        region: 'Drâa-Tafilalet'
+      },
+      {
+        id: 'dakhla',
+        name: 'Dakhla',
+        category: 'beach',
+        lat: 23.7136,
+        lng: -15.9355,
+        desc: 'Lagune paradisiaque aux portes du Sahara, paradis mondial du kitesurf et fruits de mer.',
+        icon: 'fa-wind',
+        region: 'Dakhla-Oued Ed-Dahab'
+      },
+      {
+        id: 'ifrane',
+        name: 'Ifrane & Parc National',
+        category: 'nature',
+        lat: 33.5273,
+        lng: -5.1074,
+        desc: 'Petite Suisse marocaine, forêts de cèdres du Moyen-Atlas et stations d\'hiver.',
+        icon: 'fa-tree',
+        region: 'Fès-Meknès'
+      }
+    ];
+
+    // State
+    let map = null;
+    let markersLayer = null;
+    let userMarker = null;
+    let userAccuracyCircle = null;
+    let userCoords = { lat: null, lng: null, accuracy: null };
+
+    // Initialisation de la carte Leaflet
+    function initMap() {
+      // Centre du Maroc (vue globale englobant tout le royaume)
+      map = L.map('morocco-map', {
+        zoomControl: false
+      }).setView([29.5, -7.5], 6);
+
+      // Fond de carte sombre & moderne CARTO Dark Matter
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 19
+      }).addTo(map);
+
+      // Contrôle de zoom personnalisé en bas à droite
+      L.control.zoom({
+        position: 'bottomright'
+      }).addTo(map);
+
+      markersLayer = L.layerGroup().addTo(map);
+
+      // Afficher les marqueurs initiaux
+      renderPlacesMarkers(MOROCCO_PLACES);
+      renderPlacesList(MOROCCO_PLACES);
+
+      // Lancer la géolocalisation automatique
+      requestUserLocation(false);
+    }
+
+    // Affichage des marqueurs sur la carte
+    function renderPlacesMarkers(places) {
+      markersLayer.clearLayers();
+
+      places.forEach(place => {
+        let pinClass = 'pin-city';
+        if (place.category === 'nature') pinClass = 'pin-nature';
+        if (place.category === 'desert') pinClass = 'pin-desert';
+        if (place.category === 'beach') pinClass = 'pin-beach';
+
+        const customIcon = L.divIcon({
+          className: 'custom-div-icon',
+          html: `<div class="custom-map-pin ${pinClass}" style="width:32px; height:32px;">
+                  <i class="fa-solid ${place.icon}"></i>
+                 </div>`,
+          iconSize: [32, 32],
+          iconAnchor: [16, 16],
+          popupAnchor: [0, -18]
+        });
+
+        const popupHtml = `
+          <div class="popup-content-box">
+            <div class="popup-title">
+              <i class="fa-solid ${place.icon}" style="color:var(--primary);"></i>
+              ${place.name}
+            </div>
+            <span class="popup-tag">${place.region}</span>
+            <p class="popup-desc">${place.desc}</p>
+            <div class="popup-actions">
+              <a href="https://www.google.com/maps/dir/?api=1&destination=${place.lat},${place.lng}" target="_blank" class="popup-btn popup-btn-itinerary">
+                <i class="fa-solid fa-diamond-turn-right"></i> Itinéraire
+              </a>
+              <button class="popup-btn popup-btn-center" onclick="centerOnPlace(${place.lat}, ${place.lng}, 11)">
+                <i class="fa-solid fa-magnifying-glass-plus"></i> Zoomer
+              </button>
+            </div>
+          </div>
+        `;
+
+        const marker = L.marker([place.lat, place.lng], { icon: customIcon })
+          .bindPopup(popupHtml);
+
+        markersLayer.addLayer(marker);
+      });
+    }
+
+    // Affichage de la liste latérale
+    function renderPlacesList(places) {
+      const listContainer = document.getElementById('places-list');
+      const countDisplay = document.getElementById('places-count');
+      countDisplay.textContent = `${places.length} lieu(x)`;
+
+      listContainer.innerHTML = '';
+      places.forEach(place => {
+        const item = document.createElement('div');
+        item.className = 'place-item';
+        item.onclick = () => {
+          centerOnPlace(place.lat, place.lng, 11);
+        };
+
+        item.innerHTML = `
+          <div class="place-icon">
+            <i class="fa-solid ${place.icon}"></i>
+          </div>
+          <div class="place-details">
+            <div class="place-title">${place.name}</div>
+            <div class="place-region">${place.region}</div>
+          </div>
+          <div class="place-action-btn">
+            <i class="fa-solid fa-arrow-right"></i>
+          </div>
+        `;
+
+        listContainer.appendChild(item);
+      });
+    }
+
+    // Filtrer les lieux
+    function filterPlaces(category) {
+      document.querySelectorAll('.filter-tab').forEach(tab => tab.classList.remove('active'));
+      if (window.event && window.event.target) {
+        const btn = window.event.target.closest('.filter-tab');
+        if (btn) btn.classList.add('active');
+      }
+
+      const filtered = category === 'all' 
+        ? MOROCCO_PLACES 
+        : MOROCCO_PLACES.filter(p => p.category === category);
+
+      renderPlacesMarkers(filtered);
+      renderPlacesList(filtered);
+    }
+
+    // Centrer la carte sur un lieu
+    function centerOnPlace(lat, lng, zoomLevel = 10) {
+      if (map) {
+        map.flyTo([lat, lng], zoomLevel, {
+          animate: true,
+          duration: 1.2
+        });
+      }
+    }
+
+    // Vue globale du Maroc
+    function resetMapMorocco() {
+      if (map) {
+        map.flyTo([29.5, -7.5], 6, {
+          duration: 1.2
+        });
+      }
+    }
+
+    // Géolocalisation de l'utilisateur
+    function requestUserLocation(shouldCenter = false) {
+      const statusBadge = document.getElementById('gps-status-badge');
+      const desc = document.getElementById('gps-description');
+
+      if (!navigator.geolocation) {
+        statusBadge.textContent = "Non supporté";
+        statusBadge.className = "gps-badge waiting";
+        desc.textContent = "La géolocalisation n'est pas supportée par votre navigateur.";
+        return;
+      }
+
+      statusBadge.textContent = "Recherche...";
+      statusBadge.className = "gps-badge waiting";
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          userCoords.lat = position.coords.latitude;
+          userCoords.lng = position.coords.longitude;
+          userCoords.accuracy = Math.round(position.coords.accuracy);
+
+          // Mettre à jour l'UI
+          document.getElementById('lat-display').textContent = userCoords.lat.toFixed(6);
+          document.getElementById('lng-display').textContent = userCoords.lng.toFixed(6);
+          document.getElementById('acc-display').textContent = `± ${userCoords.accuracy} m`;
+
+          statusBadge.textContent = "Localisé";
+          statusBadge.className = "gps-badge active";
+          desc.textContent = "Position GPS verrouillée avec succès. Prête pour le partage.";
+
+          // Modal coordonnées
+          document.getElementById('modal-coords-text').innerHTML = 
+            `<strong>Lat:</strong> ${userCoords.lat.toFixed(6)} | <strong>Lng:</strong> ${userCoords.lng.toFixed(6)} (± ${userCoords.accuracy}m)`;
+
+          // Mettre à jour les liens de partage
+          updateShareLinks();
+
+          // Placer le marqueur utilisateur sur la carte
+          updateUserMapMarker(userCoords.lat, userCoords.lng, userCoords.accuracy);
+
+          if (shouldCenter && map) {
+            map.flyTo([userCoords.lat, userCoords.lng], 14, { duration: 1.2 });
+          }
+        },
+        (error) => {
+          console.warn("Erreur géolocalisation:", error.message);
+          statusBadge.textContent = "Signal GPS requis";
+          statusBadge.className = "gps-badge waiting";
+          desc.textContent = "Veuillez autoriser l'accès GPS pour partager vos coordonnées exactes avec les secours.";
+          document.getElementById('modal-coords-text').textContent = 
+            "Position GPS non disponible. Activez le GPS de votre appareil.";
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      );
+    }
+
+    function updateUserMapMarker(lat, lng, accuracy) {
+      if (userMarker) map.removeLayer(userMarker);
+      if (userAccuracyCircle) map.removeLayer(userAccuracyCircle);
+
+      const userIcon = L.divIcon({
+        className: 'custom-user-icon',
+        html: `<div class="custom-map-pin pin-user" style="width:26px; height:26px;">
+                <i class="fa-solid fa-person-falling-burst"></i>
+               </div>`,
+        iconSize: [26, 26],
+        iconAnchor: [13, 13]
+      });
+
+      userMarker = L.marker([lat, lng], { icon: userIcon })
+        .bindPopup(`<strong>Ma Position GPS Actuelle</strong><br>Lat: ${lat.toFixed(6)}<br>Lng: ${lng.toFixed(6)}<br>Précision: ±${accuracy}m`)
+        .addTo(map);
+
+      userAccuracyCircle = L.circle([lat, lng], {
+        radius: accuracy,
+        color: '#ef4444',
+        fillColor: '#ef4444',
+        fillOpacity: 0.15,
+        weight: 1
+      }).addTo(map);
+    }
+
+    // Mise à jour des liens WhatsApp et SMS avec coordonnées
+    function updateShareLinks() {
+      if (!userCoords.lat || !userCoords.lng) return;
+
+      const mapLink = `https://maps.google.com/?q=${userCoords.lat},${userCoords.lng}`;
+      const sosMessage = `URGENCE MAROC - J'ai besoin d'assistance !\nMes coordonnées GPS :\nLatitude : ${userCoords.lat.toFixed(6)}\nLongitude : ${userCoords.lng.toFixed(6)}\nPrécision : ±${userCoords.accuracy} mètres\nLocalisation sur la carte : ${mapLink}`;
+
+      const encodedMsg = encodeURIComponent(sosMessage);
+
+      // WhatsApp
+      const waUrl = `https://wa.me/?text=${encodedMsg}`;
+      document.getElementById('share-whatsapp-btn').href = waUrl;
+      document.getElementById('modal-whatsapp-btn').href = waUrl;
+
+      // SMS (compatible iOS / Android)
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const smsSeparator = isIOS ? '&' : '?';
+      const smsUrl = `sms:${smsSeparator}body=${encodedMsg}`;
+      document.getElementById('share-sms-btn').href = smsUrl;
+      document.getElementById('modal-sms-btn').href = smsUrl;
+    }
+
+    // Copier coordonnées
+    function copyCoordinates() {
+      if (!userCoords.lat || !userCoords.lng) {
+        alert("Coordonnées non encore obtenues. Veuillez activer votre localisation.");
+        return;
+      }
+
+      const text = `${userCoords.lat.toFixed(6)}, ${userCoords.lng.toFixed(6)} (Lien: https://maps.google.com/?q=${userCoords.lat},${userCoords.lng})`;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('copy-coords-btn');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = `<i class="fa-solid fa-check" style="color:#10b981;"></i> Coordonnées copiées !`;
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+        }, 2500);
+      }).catch(err => {
+        prompt("Copiez vos coordonnées manuellement :", `${userCoords.lat}, ${userCoords.lng}`);
+      });
+    }
+
+    // Gestion du Modal SOS
+    function openSosModal() {
+      document.getElementById('sos-modal').classList.add('open');
+      requestUserLocation(false);
+    }
+
+    function closeSosModal() {
+      document.getElementById('sos-modal').classList.remove('open');
+    }
+
+    function onBackdropClick(e) {
+      if (e.target.id === 'sos-modal') {
+        closeSosModal();
+      }
+    }
+
+    // Écouteur clavier (Échap pour fermer)
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeSosModal();
+    });
+
+    // Bascule de vue sur smartphone (Carte vs Urgences/GPS)
+    function switchMobileView(view) {
+      const sidebar = document.getElementById('app-sidebar');
+      const mapContainer = document.getElementById('app-map-container');
+      const tabMap = document.getElementById('tab-btn-map');
+      const tabEmergency = document.getElementById('tab-btn-emergency');
+
+      if (view === 'map') {
+        sidebar.classList.remove('mobile-visible');
+        mapContainer.classList.remove('mobile-hidden');
+        tabMap.classList.add('active');
+        tabEmergency.classList.remove('active');
+        // Forcer le recalcul de taille Leaflet
+        setTimeout(() => {
+          if (map) map.invalidateSize();
+        }, 150);
+      } else {
+        sidebar.classList.add('mobile-visible');
+        mapContainer.classList.add('mobile-hidden');
+        tabMap.classList.remove('active');
+        tabEmergency.classList.add('active');
+      }
+    }
+
+    // Centrer la carte depuis la liste en fermant la vue liste sur mobile
+    const originalCenterOnPlace = centerOnPlace;
+    centerOnPlace = function(lat, lng, zoomLevel = 10) {
+      if (window.innerWidth <= 768) {
+        switchMobileView('map');
+      }
+      originalCenterOnPlace(lat, lng, zoomLevel);
+    };
+
+    // ================================================================
+    // === FONCTIONNALITÉS EXCLUSIVES ===
+    // ================================================================
+
+    // --- 1. Lampe Torche SOS Morse ---
+    let torchActive = false;
+    let torchInterval = null;
+    const SOS_MORSE = [300,300,300, 800, 700,700,700, 800, 300,300,300]; // timing simplifié
+    function toggleTorch() {
+      const btn = document.getElementById('torch-btn');
+      const overlay = document.getElementById('sos-blink');
+      torchActive = !torchActive;
+      if (torchActive) {
+        btn.classList.add('on');
+        btn.title = 'Désactiver la lampe';
+        playMorseSOS(overlay);
+      } else {
+        btn.classList.remove('on');
+        btn.title = 'Activer la lampe torche SOS';
+        overlay.style.display = 'none';
+        if (torchInterval) clearTimeout(torchInterval);
+      }
+    }
+    function playMorseSOS(overlay) {
+      if (!torchActive) return;
+      let seq = [...SOS_MORSE, 1500]; // pause finale
+      let idx = 0;
+      function step() {
+        if (!torchActive) { overlay.style.display='none'; return; }
+        if (idx >= seq.length) { idx = 0; }
+        const isOn = idx % 2 === 0;
+        overlay.style.display = isOn ? 'block' : 'none';
+        torchInterval = setTimeout(() => { idx++; step(); }, seq[idx] || 300);
+        if (!isOn) idx++; // skip pause step inside
+      }
+      // Version simplifiée : clignoter 3 courtes, 3 longues, 3 courtes
+      const pattern = [
+        {on:200,off:200},{on:200,off:200},{on:200,off:600},
+        {on:600,off:200},{on:600,off:200},{on:600,off:600},
+        {on:200,off:200},{on:200,off:200},{on:200,off:1200}
+      ];
+      function runPattern(i) {
+        if (!torchActive) { overlay.style.display='none'; return; }
+        const p = pattern[i % pattern.length];
+        overlay.style.display = 'block';
+        torchInterval = setTimeout(() => {
+          overlay.style.display = 'none';
+          torchInterval = setTimeout(() => runPattern(i+1), p.off);
+        }, p.on);
+      }
+      runPattern(0);
+    }
+
+    // --- 2. Chronomètre d'urgence ---
+    let chronoRunning = false;
+    let chronoStart = 0;
+    let chronoElapsed = 0;
+    let chronoTimer = null;
+    function toggleChrono() {
+      const btn = document.getElementById('chrono-start-btn');
+      if (!chronoRunning) {
+        chronoStart = Date.now() - chronoElapsed;
+        chronoTimer = setInterval(updateChrono, 500);
+        chronoRunning = true;
+        btn.innerHTML = '<i class="fa-solid fa-pause"></i> Pause';
+        btn.style.background = '#f59e0b';
+      } else {
+        clearInterval(chronoTimer);
+        chronoRunning = false;
+        btn.innerHTML = '<i class="fa-solid fa-play"></i> Reprendre';
+        btn.style.background = '#ef4444';
+      }
+    }
+    function resetChrono() {
+      clearInterval(chronoTimer);
+      chronoRunning = false;
+      chronoElapsed = 0;
+      document.getElementById('chrono-display').textContent = '00:00:00';
+      const btn = document.getElementById('chrono-start-btn');
+      btn.innerHTML = '<i class="fa-solid fa-play"></i> Démarrer';
+      btn.style.background = '#ef4444';
+    }
+    function updateChrono() {
+      chronoElapsed = Date.now() - chronoStart;
+      const h = Math.floor(chronoElapsed/3600000);
+      const m = Math.floor((chronoElapsed%3600000)/60000);
+      const s = Math.floor((chronoElapsed%60000)/1000);
+      document.getElementById('chrono-display').textContent =
+        `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
+
+    // --- 3. Météo en direct (Open-Meteo, sans clé) ---
+    async function loadWeather() {
+      const box = document.getElementById('weather-content');
+      if (!userCoords.lat) {
+        box.innerHTML = '<div class="weather-status">Activez la localisation pour voir la météo.</div>';
+        return;
+      }
+      box.innerHTML = '<div class="weather-status"><i class="fa-solid fa-rotate fa-spin"></i> Chargement météo...</div>';
+      try {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${userCoords.lat}&longitude=${userCoords.lng}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weathercode,precipitation&wind_speed_unit=kmh&timezone=auto`;
+        const res = await fetch(url);
+        const data = await res.json();
+        const c = data.current;
+        const wCodes = {
+          0:'☀️ Ciel dégagé', 1:'🌤️ Partiellement nuageux', 2:'⛅ Nuageux', 3:'☁️ Couvert',
+          45:'🌫️ Brouillard', 51:'🌦️ Bruine légère', 61:'🌧️ Pluie', 71:'❄️ Neige',
+          80:'🌦️ Averses', 95:'⛈️ Orage', 99:'⛈️ Orage fort'
+        };
+        const desc = wCodes[c.weathercode] || wCodes[Math.floor(c.weathercode/10)*10] || '🌍 Variable';
+        box.innerHTML = `
+          <div class="weather-grid">
+            <div class="weather-item"><div class="weather-val">${c.temperature_2m}°C</div><div class="weather-key">Température</div></div>
+            <div class="weather-item"><div class="weather-val">${c.relative_humidity_2m}%</div><div class="weather-key">Humidité</div></div>
+            <div class="weather-item"><div class="weather-val">${c.wind_speed_10m} km/h</div><div class="weather-key">Vent</div></div>
+            <div class="weather-item"><div class="weather-val">${c.precipitation} mm</div><div class="weather-key">Précipitations</div></div>
+          </div>
+          <div class="weather-status" style="margin-top:0.4rem; font-size:0.8rem; color:#e0f2fe;">${desc}</div>
+        `;
+      } catch(e) {
+        box.innerHTML = '<div class="weather-status">❌ Météo indisponible. Vérifiez votre connexion.</div>';
+      }
+    }
+
+    // --- 4. Messages d'urgence multilingues ---
+    let currentLang = 'fr';
+    const EMERGENCY_MSGS = {
+      fr: (lat, lng, acc) => `🆘 URGENCE — J'ai besoin d'aide immédiatement !\n📍 Ma position GPS :\nLat : ${lat} | Lng : ${lng} (précision ±${acc}m)\n🗺️ Carte : https://maps.google.com/?q=${lat},${lng}\nAppelez le 15 (Protection Civile), 19 (Police) ou 177 (Gendarmerie).`,
+      ar: (lat, lng, acc) => `🆘 طوارئ — أحتاج إلى مساعدة فورية!\n📍 موقعي GPS:\nخط العرض: ${lat} | خط الطول: ${lng} (دقة ±${acc}م)\n🗺️ الخريطة: https://maps.google.com/?q=${lat},${lng}\nاتصل بـ 15 (الحماية المدنية)، 19 (الشرطة) أو 177 (الدرك الملكي).`,
+      en: (lat, lng, acc) => `🆘 EMERGENCY — I need immediate help!\n📍 My GPS Location:\nLat: ${lat} | Lng: ${lng} (accuracy ±${acc}m)\n🗺️ Map: https://maps.google.com/?q=${lat},${lng}\nCall 15 (Civil Protection), 19 (Police) or 177 (Gendarmerie) in Morocco.`,
+      es: (lat, lng, acc) => `🆘 EMERGENCIA — ¡Necesito ayuda de inmediato!\n📍 Mi ubicación GPS:\nLat: ${lat} | Lng: ${lng} (precisión ±${acc}m)\n🗺️ Mapa: https://maps.google.com/?q=${lat},${lng}\nLlamar al 15 (Protección Civil), 19 (Policía) o 177 (Gendarmería) en Marruecos.`
+    };
+    function setLang(lang) {
+      currentLang = lang;
+      document.querySelectorAll('.lang-tab').forEach(t => t.classList.remove('active'));
+      if (window.event && window.event.target) {
+        const btn = window.event.target.closest('.lang-tab');
+        if (btn) btn.classList.add('active');
+      }
+      refreshLangMsg();
+    }
+    function refreshLangMsg() {
+      const box = document.getElementById('lang-msg-box');
+      if (!userCoords.lat) {
+        box.textContent = 'Activez la localisation pour générer le message...';
+        return;
+      }
+      box.textContent = EMERGENCY_MSGS[currentLang](userCoords.lat.toFixed(5), userCoords.lng.toFixed(5), userCoords.accuracy);
+    }
+    function copyEmergencyMsg() {
+      const text = document.getElementById('lang-msg-box').textContent;
+      const btn = window.event ? window.event.target.closest('button') : null;
+      navigator.clipboard.writeText(text).then(() => {
+        if (btn) {
+          const orig = btn.innerHTML;
+          btn.innerHTML = '<i class="fa-solid fa-check" style="color:#10b981;"></i> Copié !';
+          setTimeout(() => btn.innerHTML = orig, 2000);
+        }
+      }).catch(() => prompt('Copiez ce message :', text));
+    }
+
+    // --- 5. Indicateur d'état réseau en temps réel ---
+    function updateNetworkStatus() {
+      const badge = document.getElementById('network-status-badge');
+      const text  = document.getElementById('network-text');
+      if (!badge) return;
+      if (navigator.onLine) {
+        badge.className = 'network-indicator network-online';
+        text.textContent = 'En ligne';
+      } else {
+        badge.className = 'network-indicator network-offline';
+        text.textContent = 'HORS LIGNE — Appelez le 112';
+      }
+    }
+    window.addEventListener('online',  updateNetworkStatus);
+    window.addEventListener('offline', updateNetworkStatus);
+
+    // Rafraîchir les messages quand la position GPS change
+    const _origUpdateShareLinks = updateShareLinks;
+    updateShareLinks = function() {
+      _origUpdateShareLinks();
+      refreshLangMsg();
+      loadWeather();
+    };
+
+    // ================================================================
+    // === SYSTÈME D'AUTHENTIFICATION ===
+    // ================================================================
+    function checkAuthStatus() {
+      const isAuth = localStorage.getItem('sos_authenticated');
+      if (isAuth === 'true') {
+        document.getElementById('auth-overlay').style.display = 'none';
+        document.getElementById('app-wrapper').style.display = 'block';
+        initMap();
+        updateNetworkStatus();
+      }
+    }
+
+    function toggleAuthView(view) {
+      if (view === 'register') {
+        document.getElementById('login-view').style.display = 'none';
+        document.getElementById('register-view').style.display = 'block';
+      } else {
+        document.getElementById('register-view').style.display = 'none';
+        document.getElementById('login-view').style.display = 'block';
+      }
+    }
+
+    function simulateScan(input) {
+      if (!input.files || input.files.length === 0) return;
+      
+      const statusDiv = document.getElementById('scan-status');
+      const btnReg = document.getElementById('btn-register');
+      
+      statusDiv.className = 'scan-status loading';
+      statusDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Analyse de la carte en cours...';
+      btnReg.disabled = true;
+      btnReg.style.opacity = '0.5';
+
+      // Simuler le délai de scan et vérification
+      setTimeout(() => {
+        statusDiv.className = 'scan-status success';
+        statusDiv.innerHTML = '<i class="fa-solid fa-check-circle"></i> Identité vérifiée avec succès !';
+        btnReg.disabled = false;
+        btnReg.style.opacity = '1';
+      }, 2500);
+    }
+
+    function handleRegister(e) {
+      e.preventDefault();
+      const cin = document.getElementById('reg-cin').value.toUpperCase();
+      const pwd = document.getElementById('reg-pwd').value;
+      const name = document.getElementById('reg-name').value;
+      
+      localStorage.setItem('sos_user_cin', cin);
+      localStorage.setItem('sos_user_pwd', pwd);
+      localStorage.setItem('sos_user_name', name);
+      localStorage.setItem('sos_authenticated', 'true');
+      
+      alert('Inscription réussie ! Bienvenue ' + name);
+      checkAuthStatus();
+    }
+
+    function handleLogin(e) {
+      e.preventDefault();
+      const cin = document.getElementById('login-cin').value.toUpperCase();
+      const pwd = document.getElementById('login-pwd').value;
+      
+      const savedCin = localStorage.getItem('sos_user_cin');
+      const savedPwd = localStorage.getItem('sos_user_pwd');
+      
+      if (cin === savedCin && pwd === savedPwd) {
+        localStorage.setItem('sos_authenticated', 'true');
+        checkAuthStatus();
+      } else if (!savedCin) {
+        alert("Aucun compte trouvé pour ce numéro de CIN. Veuillez vous inscrire.");
+      } else {
+        alert("Mot de passe ou numéro CIN incorrect.");
+      }
+    }
+
+    // Démarrage
+    window.addEventListener('DOMContentLoaded', () => {
+      checkAuthStatus();
+    });
+  </script>
+  </div>
+</body>
+</html>
